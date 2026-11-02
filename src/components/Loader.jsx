@@ -4,14 +4,7 @@
  * Pre-loading gate. System boot sequence → portfolio initialization.
  * Appears BEFORE everything. After complete, Hero section revealed.
  *
- * Sequence Timeline:
- *   0.0s → 1.5s: "PORTFOLIO" text scrambles in (█████ → random chars → final)
- *   0.5s → 2.5s: Progress bar animates 0→100% with realistic stutters
- *   1.0s → 2.5s: System logs appear line-by-line (terminal style)
- *   2.5s → 3.0s: Red flash, screen crack animation starts
- *   3.0s → 3.5s: Voronoi glass shards explode outward with physics
- *   3.5s → 4.5s: Page transitions to Hero underneath
- *   4.5s+: onComplete() fires, this component unmounts
+ * The screen fades out after the progress sequence completes.
  *
  * USAGE in App.jsx:
  *   import InitializingPage from './InitializingPage';
@@ -94,6 +87,7 @@ export default function InitializingPage({ onComplete = () => {} }) {
 
     let isPaused = false;
     let pauseTimeLeft = 0;
+    const triggeredStutters = new Set();
 
     const interval = setInterval(() => {
       if (isPaused) {
@@ -101,15 +95,16 @@ export default function InitializingPage({ onComplete = () => {} }) {
         if (pauseTimeLeft <= 0) {
           isPaused = false;
         }
+        return;
       } else {
         elapsed += 50;
       }
 
-      let p = Math.min((elapsed / duration) * 100, 100);
+      const p = Math.min((elapsed / duration) * 100, 100);
 
-      // Check if we should stutter
-      for (let stutter of stutters) {
-        if (Math.abs(p / 100 - stutter.at) < 0.02 && !isPaused) {
+      for (const [index, stutter] of stutters.entries()) {
+        if (p / 100 >= stutter.at && !triggeredStutters.has(index)) {
+          triggeredStutters.add(index);
           isPaused = true;
           pauseTimeLeft = stutter.pause;
           break;
@@ -160,14 +155,12 @@ export default function InitializingPage({ onComplete = () => {} }) {
   // Completion Transition
   // ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    const timer1 = setTimeout(() => setFadingOut(true), 2800);  // Start fading out
-    const timer2 = setTimeout(() => onComplete(), 3300);      // Complete at 3.3s
+    if (progress < 100) return;
 
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
-  }, [onComplete]);
+    setFadingOut(true);
+    const timer = setTimeout(onComplete, 500);
+    return () => clearTimeout(timer);
+  }, [progress, onComplete]);
 
   return (
     <div

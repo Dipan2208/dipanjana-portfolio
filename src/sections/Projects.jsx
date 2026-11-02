@@ -3,7 +3,7 @@ import { trackGitHubClick, trackProjectDemoClick } from '../lib/analytics'
 
 const PROJECTS = [
   {
-    num: '01', title: 'EmotiStream AI',
+    title: 'EmotiStream AI',
     subtitle: 'AI · Emotion-Based Movie Discovery · GPT-4 Vision',
     desc: 'Intelligent movie discovery platform recommending films matching real-time emotional states via GPT-4 Vision facial analysis or manual mood selection. Full Netflix-inspired UI with live trailers and TMDB integration.',
     accent: '#8B5CF6',
@@ -19,7 +19,7 @@ const PROJECTS = [
     live: 'https://emoti-stream-ai.vercel.app/',
   },
   {
-    num: '02', title: 'Virasat Setu',
+    title: 'Virasat Setu',
     subtitle: 'Heritage & Artisan Digital Marketplace · SIH',
     desc: 'Full-stack marketplace co-developed during a Smart India Hackathon (SIH) internal round to connect regional artisans directly with buyers. Features interactive map-based heritage discovery using Leaflet, craft catalogs, Supabase persistence, and PostgreSQL verification.',
     accent: '#F59E0B',
@@ -36,7 +36,7 @@ const PROJECTS = [
     live: null,
   },
   {
-    num: '03', title: 'SPECTER',
+    title: 'SPECTER',
     subtitle: 'Wi-Fi CSI Through-Wall Presence Detection · ESP32',
     desc: 'Low-cost human presence detection using ESP32 Wi-Fi Channel State Information (CSI). A Random Forest/SVM pipeline analyzes subcarrier amplitude fluctuations to classify occupied vs. empty rooms through barriers, with real-time UI telemetry. Patent work is in progress; the repository is private.',
     accent: '#00D2BE',
@@ -53,7 +53,7 @@ const PROJECTS = [
     live: null,
   },
   {
-    num: '04', title: 'Mailcheck',
+    title: 'Mailcheck',
     subtitle: 'Email Deliverability Engine · SMTP Socket Probes',
     desc: 'High-speed email validation service verifying inbox existence before sending without delivering payload. Executes RFC 5321 syntax validation, DNS MX queries, disposable domain filtering, and non-intrusive SMTP port 25 socket handshakes.',
     accent: '#38BDF8',
@@ -89,13 +89,13 @@ export default function Projects() {
   const touchStart = useRef(0)
 
   const p = PROJECTS[displayed]
+  const projectNumber = String(displayed + 1).padStart(2, '0')
+  const projectCount = String(PROJECTS.length).padStart(2, '0')
 
-  const navigate = useCallback((dir) => {
-    if (animating.current) return
-    const next = current + dir
-    if (next < 0 || next >= PROJECTS.length) return
+  const transitionTo = useCallback((next) => {
+    if (animating.current || next === current || next < 0 || next >= PROJECTS.length) return
     animating.current = true
-    setAnim(dir > 0 ? 'leave-left' : 'leave-right')
+    setAnim(next > current ? 'leave-left' : 'leave-right')
     setTimeout(() => {
       setDisplayed(next)
       setCurrent(next)
@@ -107,19 +107,13 @@ export default function Projects() {
     }, 320)
   }, [current])
 
+  const navigate = useCallback((dir) => {
+    transitionTo(current + dir)
+  }, [current, transitionTo])
+
   const goTo = useCallback((i) => {
-    if (animating.current || i === current) return
-    navigate(i > current ? 1 : -1)
-    // override next index directly
-    animating.current = true
-    setAnim(i > current ? 'leave-left' : 'leave-right')
-    setTimeout(() => {
-      setDisplayed(i)
-      setCurrent(i)
-      setAnim('enter')
-      setTimeout(() => { setAnim(''); animating.current = false }, 500)
-    }, 320)
-  }, [current])
+    transitionTo(i)
+  }, [transitionTo])
 
   useEffect(() => {
     const onKey = (e) => {
@@ -234,7 +228,7 @@ export default function Projects() {
                   color: p.accent, opacity: 0.14,
                   transition: 'color 0.4s',
                 }}>
-                  {p.num}
+                  {projectNumber}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
                   {p.flagship && (
@@ -403,7 +397,7 @@ export default function Projects() {
           fontWeight: 900, letterSpacing: '-0.04em',
           color: `${p.accent}66`, transition: 'color 0.4s',
         }}>
-          {current + 1}<span style={{ color: 'rgba(255,255,255,0.12)', fontSize: '0.6em' }}>/{PROJECTS.length}</span>
+          {projectNumber}<span style={{ color: 'rgba(255,255,255,0.12)', fontSize: '0.6em' }}>/{projectCount}</span>
         </div>
       </div>
 
