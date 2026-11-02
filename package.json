@@ -1,0 +1,31 @@
+{
+  "name": "dipanjana-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cinematic portfolio website for Dipanjana Ghosh — Full Stack Developer & AI Builder",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "author": "Dipanjana Ghosh",
+  "license": "ISC",
+  "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
+    "@studio-freight/lenis": "^1.0.42",
+    "framer-motion": "^12.38.0",
+    "gsap": "^3.14.2",
+    "postprocessing": "^6.39.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "three": "^0.183.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.2",
+    "@vitejs/plugin-react": "^6.0.1",
+    "tailwindcss": "^4.2.2",
+    "vite": "^8.0.3"
+  }
+}
