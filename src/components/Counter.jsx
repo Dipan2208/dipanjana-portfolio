@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 
 const SECTIONS = [
   { id: 'hero',          label: 'HERO',           lap: '01', color: '#8B5CF6' },
@@ -16,8 +16,6 @@ export default function LapCounter() {
   const [currentLap, setCurrentLap] = useState(0)
   const [progress, setProgress] = useState(0)
   const [visible, setVisible] = useState(false)
-  const rafRef = useRef(null)
-
   useEffect(() => {
     // Show after a brief delay
     const t = setTimeout(() => setVisible(true), 2500)
@@ -25,7 +23,10 @@ export default function LapCounter() {
   }, [])
 
   useEffect(() => {
+    let frameId = null
+
     const update = () => {
+      frameId = null
       const scrollY = window.scrollY
       const winH = window.innerHeight
 
@@ -45,13 +46,23 @@ export default function LapCounter() {
         }
       })
 
-      setCurrentLap(active)
-      setProgress(sectionProgress)
-      rafRef.current = requestAnimationFrame(update)
+      setCurrentLap(previous => previous === active ? previous : active)
+      const roundedProgress = Math.round(sectionProgress)
+      setProgress(previous => previous === roundedProgress ? previous : roundedProgress)
     }
 
-    rafRef.current = requestAnimationFrame(update)
-    return () => cancelAnimationFrame(rafRef.current)
+    const scheduleUpdate = () => {
+      if (frameId === null) frameId = requestAnimationFrame(update)
+    }
+
+    scheduleUpdate()
+    window.addEventListener('scroll', scheduleUpdate, { passive: true })
+    window.addEventListener('resize', scheduleUpdate)
+    return () => {
+      window.removeEventListener('scroll', scheduleUpdate)
+      window.removeEventListener('resize', scheduleUpdate)
+      if (frameId !== null) cancelAnimationFrame(frameId)
+    }
   }, [])
 
   const sec = SECTIONS[currentLap]

@@ -133,7 +133,7 @@ export default function Projects() {
     : {}
 
   return (
-    <section id="projects" className="obs-section bg-dark" style={{ position: 'relative', overflow: 'hidden', padding: '60px 48px' }}>
+    <section id="projects" className="obs-section bg-dark projects-section" style={{ position: 'relative', overflow: 'hidden', padding: '60px 48px' }}>
 
       {/* Keyframes injected once */}
       <style>{`
@@ -157,6 +157,19 @@ export default function Projects() {
         .proj-pdot:hover { background: rgba(139,92,246,0.5) !important; }
         .proj-card-wrap:hover { transform: translateY(-6px) rotateX(2deg) !important; }
         .proj-explore:hover { color: rgba(139,92,246,0.9) !important; }
+        .projects-section { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; }
+        @media (max-width: 768px) {
+          .projects-section { padding: 82px 16px 72px !important; }
+          .projects-top-row { margin-bottom: 1rem !important; }
+          .projects-top-row span { font-size: 10px !important; }
+          .projects-card-stage { min-height: 0 !important; perspective: none !important; }
+          .projects-card-content { padding: 1.25rem 1rem 1rem !important; }
+          .proj-card-wrap { border-radius: 12px !important; }
+          .projects-nav-row { margin-top: 1.25rem !important; }
+          .projects-nav-row .proj-nav-btn { width: 44px !important; height: 44px !important; }
+          .projects-bottom-label { bottom: 1rem !important; left: 1rem !important; }
+          .projects-explore-link { bottom: 1rem !important; right: 1rem !important; }
+        }
       `}</style>
 
       {/* Ghost background word */}
@@ -175,7 +188,7 @@ export default function Projects() {
       </div>
 
       {/* Top row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2, marginBottom: '1.5rem' }}>
+      <div className="projects-top-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2, marginBottom: '1.5rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <div style={{ width: 20, height: 1, background: p.accent, transition: 'background 0.4s' }} />
@@ -193,7 +206,7 @@ export default function Projects() {
       </div>
 
       {/* Card stage */}
-      <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 420, perspective: 1200 }}>
+      <div className="projects-card-stage" style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 420, perspective: 1200 }}>
         <div style={{ position: 'relative', width: 'min(540px,92%)' }}>
           <div
             ref={cardRef}
@@ -217,7 +230,7 @@ export default function Projects() {
             {/* Accent top bar */}
             <div style={{ height: 3, background: p.accentGrad, width: '100%', transition: 'background 0.4s' }} />
 
-            <div style={{ padding: '2rem 2rem 1.5rem' }}>
+            <div className="projects-card-content" style={{ padding: '2rem 2rem 1.5rem' }}>
               {/* Card header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                 <div style={{
@@ -346,7 +359,7 @@ export default function Projects() {
       </div>
 
       {/* Nav row */}
-      <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2rem' }}>
+      <div className="projects-nav-row" style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <button
             className="proj-nav-btn"
@@ -402,14 +415,14 @@ export default function Projects() {
       </div>
 
       {/* Bottom labels */}
-      <div style={{ position: 'absolute', bottom: '1.5rem', left: '2rem', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.2em', textTransform: 'uppercase', zIndex: 2 }}>
+      <div className="projects-bottom-label" style={{ position: 'absolute', bottom: '1.5rem', left: '2rem', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.2em', textTransform: 'uppercase', zIndex: 2 }}>
         | Assembly Protocol |
       </div>
       {p.github && <a
         href={p.github}
         target="_blank"
         rel="noopener noreferrer"
-        className="proj-explore"
+        className="proj-explore projects-explore-link"
         style={{
           position: 'absolute', bottom: '1.5rem', right: '2rem',
           fontFamily: 'var(--font-mono)', fontSize: 9,

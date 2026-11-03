@@ -157,7 +157,7 @@ export default function ContributionsTimeline() {
         EXPERIENCE
       </div>
 
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 48px', position: 'relative', zIndex: 2 }}>
+      <div className="mobile-content-gutter" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 48px', position: 'relative', zIndex: 2 }}>
 
         {/* Section header */}
         <div style={{ marginBottom: '3rem' }}>

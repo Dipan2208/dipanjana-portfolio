@@ -355,13 +355,17 @@ const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
 
         const initW = Math.max(1, container.offsetWidth);
         const initH = Math.max(1, container.offsetHeight);
+        this.isMobile = window.matchMedia('(max-width: 768px), (pointer: coarse)').matches;
+        this.frameId = null;
+        this.isVisible = false;
+        this.isInitialized = false;
 
         this.renderer = new THREE.WebGLRenderer({
           antialias: false,
           alpha: true
         });
         this.renderer.setSize(initW, initH, false);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.isMobile ? 1 : 1.5));
         this.composer = new EffectComposer(this.renderer);
         container.append(this.renderer.domElement);
 
@@ -382,6 +386,17 @@ const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
         this.clock = new THREE.Clock();
         this.assets = {};
         this.disposed = false;
+        this.onVisibilityChange = () => {
+          if (!document.hidden && this.isVisible && this.isInitialized) this.requestFrame();
+        };
+        this.visibilityObserver = 'IntersectionObserver' in window
+          ? new IntersectionObserver(([entry]) => {
+              this.isVisible = entry.isIntersecting;
+              if (this.isVisible) this.requestFrame();
+            })
+          : null;
+        this.visibilityObserver?.observe(container);
+        document.addEventListener('visibilitychange', this.onVisibilityChange);
 
         this.road = new Road(this, options);
         this.leftCarLights = new CarLights(
@@ -446,27 +461,30 @@ const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
           new BloomEffect({
             luminanceThreshold: 0.2,
             luminanceSmoothing: 0,
-            resolutionScale: 1
-          })
-        );
-
-        const smaaPass = new EffectPass(
-          this.camera,
-          new SMAAEffect({
-            preset: SMAAPreset.MEDIUM,
-            searchImage: SMAAEffect.searchImageDataURL,
-            areaImage: SMAAEffect.areaImageDataURL
+            resolutionScale: this.isMobile ? 0.65 : 1
           })
         );
         this.renderPass.renderToScreen = false;
-        this.bloomPass.renderToScreen = false;
-        smaaPass.renderToScreen = true;
+        this.bloomPass.renderToScreen = this.isMobile;
         this.composer.addPass(this.renderPass);
         this.composer.addPass(this.bloomPass);
-        this.composer.addPass(smaaPass);
+        if (!this.isMobile) {
+          const smaaPass = new EffectPass(
+            this.camera,
+            new SMAAEffect({
+              preset: SMAAPreset.MEDIUM,
+              searchImage: SMAAEffect.searchImageDataURL,
+              areaImage: SMAAEffect.areaImageDataURL
+            })
+          );
+          this.bloomPass.renderToScreen = false;
+          smaaPass.renderToScreen = true;
+          this.composer.addPass(smaaPass);
+        }
       }
 
       loadAssets() {
+        if (this.isMobile) return Promise.resolve();
         const assets = this.assets;
         return new Promise(resolve => {
           const manager = new THREE.LoadingManager(resolve);
@@ -513,7 +531,8 @@ const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
 
         this.container.addEventListener('contextmenu', this.onContextMenu);
 
-        this.tick();
+        this.isInitialized = true;
+        this.requestFrame();
       }
 
       onMouseDown(ev) {
@@ -586,6 +605,12 @@ const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
 
       dispose() {
         this.disposed = true;
+        if (this.frameId !== null) {
+          cancelAnimationFrame(this.frameId);
+          this.frameId = null;
+        }
+        this.visibilityObserver?.disconnect();
+        document.removeEventListener('visibilitychange', this.onVisibilityChange);
 
         if (this.scene) {
           this.scene.traverse(object => {
@@ -638,8 +663,14 @@ const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
         this.hasValidSize = true;
       }
 
+      requestFrame() {
+        if (this.disposed || !this.isInitialized || this.frameId !== null || !this.isVisible || document.hidden) return;
+        this.frameId = requestAnimationFrame(this.tick);
+      }
+
       tick() {
-        if (this.disposed) return;
+        this.frameId = null;
+        if (this.disposed || !this.isInitialized || !this.isVisible || document.hidden) return;
 
         if (!this.hasValidSize) {
           const w = this.container.offsetWidth;
@@ -651,7 +682,7 @@ const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
             this.composer.setSize(w, h);
             this.hasValidSize = true;
           } else {
-            requestAnimationFrame(this.tick);
+            this.requestFrame();
             return;
           }
         }
@@ -670,7 +701,7 @@ const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
           this.update(delta);
         }
 
-        requestAnimationFrame(this.tick);
+        this.requestFrame();
       }
     }
 
@@ -1148,7 +1179,9 @@ const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
       if (width <= 0 || height <= 0) return false;
-      const needResize = canvas.width !== width || canvas.height !== height;
+      const pixelRatio = renderer.getPixelRatio();
+      const needResize = canvas.width !== Math.floor(width * pixelRatio)
+        || canvas.height !== Math.floor(height * pixelRatio);
       if (needResize) {
         setSize(width, height, false);
       }
@@ -1163,11 +1196,17 @@ const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
       ...effectOptions,
       colors: { ...DEFAULT_EFFECT_OPTIONS.colors, ...effectOptions.colors }
     };
+    if (window.matchMedia('(max-width: 768px), (pointer: coarse)').matches) {
+      options.lightPairsPerRoadWay = Math.min(options.lightPairsPerRoadWay, 20);
+      options.totalSideLightSticks = Math.min(options.totalSideLightSticks, 10);
+    }
     options.distortion = distortions[options.distortion];
 
     const myApp = new App(container, options);
     appRef.current = myApp;
-    myApp.loadAssets().then(myApp.init);
+    myApp.loadAssets().then(() => {
+      if (!myApp.disposed) myApp.init();
+    });
 
     return () => {
       if (appRef.current) {

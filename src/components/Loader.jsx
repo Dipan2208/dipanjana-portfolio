@@ -70,46 +70,19 @@ export default function InitializingPage({ onComplete = () => {} }) {
   }, []);
 
   // ─────────────────────────────────────────────────────────────
-  // Progress Bar with Stutters
+  // Fast progress through 75%, followed by a slower finishing phase
   // ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    let elapsed = 0;
-    const duration = 2500; // 2.5 seconds total
-
-    // Realistic stutter points (% of progress where it pauses briefly)
-    const stutters = [
-      { at: 0.18, pause: 300 },  // Pause at 18%
-      { at: 0.45, pause: 250 },  // Pause at 45%
-      { at: 0.72, pause: 400 },  // Pause at 72%
-      { at: 0.88, pause: 200 },  // Pause at 88%
-      { at: 0.95, pause: 150 },  // Pause at 95%
-    ];
-
-    let isPaused = false;
-    let pauseTimeLeft = 0;
-    const triggeredStutters = new Set();
+    const startedAt = performance.now();
+    const fastPhaseDuration = 900;
+    const slowPhaseDuration = 2400;
+    const totalDuration = fastPhaseDuration + slowPhaseDuration;
 
     const interval = setInterval(() => {
-      if (isPaused) {
-        pauseTimeLeft -= 50;
-        if (pauseTimeLeft <= 0) {
-          isPaused = false;
-        }
-        return;
-      } else {
-        elapsed += 50;
-      }
-
-      const p = Math.min((elapsed / duration) * 100, 100);
-
-      for (const [index, stutter] of stutters.entries()) {
-        if (p / 100 >= stutter.at && !triggeredStutters.has(index)) {
-          triggeredStutters.add(index);
-          isPaused = true;
-          pauseTimeLeft = stutter.pause;
-          break;
-        }
-      }
+      const elapsed = Math.min(performance.now() - startedAt, totalDuration);
+      const p = elapsed <= fastPhaseDuration
+        ? (elapsed / fastPhaseDuration) * 75
+        : 75 + ((elapsed - fastPhaseDuration) / slowPhaseDuration) * 25;
 
       setProgress(p);
 

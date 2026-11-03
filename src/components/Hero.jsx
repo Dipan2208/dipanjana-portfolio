@@ -133,6 +133,7 @@ export default function Hero() {
     <section
       ref={sectionRef}
       id="hero"
+      className="hero-section"
       style={{
         position: "relative",
         minHeight: "100vh",
@@ -154,6 +155,7 @@ export default function Hero() {
 
       {/* Ambient glow */}
       <div
+        className="hero-content"
         style={{
           position: "absolute",
           inset: 0,

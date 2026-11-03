@@ -225,15 +225,16 @@ export default function QuoteReveal() {
     <section
       id="quote"
       ref={outerRef}
+      className="quote-section"
       style={S.outer}
     >
-      <div style={S.sticky}>
+      <div className="quote-sticky" style={S.sticky}>
 
         {/* Ambient glow */}
         <div ref={glowRef} style={S.glowBg} />
 
         {/* Quote stage */}
-        <div style={S.stage}>
+        <div className="quote-stage" style={S.stage}>
           {PHRASES.map((phrase, i) => (
             <span
               key={phrase.id}
@@ -243,6 +244,7 @@ export default function QuoteReveal() {
               }}
             >
               <span
+                className="quote-phrase"
                 ref={el => (wordRefs.current[i] = el)}
                 style={{
                   ...S.phraseInnerBase,

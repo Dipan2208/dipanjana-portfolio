@@ -660,6 +660,13 @@ a, button, input, textarea, select { cursor: none; }
   .section-dots { display: none; }
   .obs-section { padding: 80px 20px !important; min-height: auto; }
   .obs-inner { padding: 0 !important; }
+  .mobile-content-gutter { padding: 0 16px !important; }
+  .hero-section { min-height: 100svh !important; padding: 5rem 1rem 7rem !important; }
+  .hero-content { width: 100%; gap: 1.1rem !important; margin-top: -2vh !important; }
+  .quote-section { height: 300svh !important; }
+  .quote-sticky { height: 100svh !important; }
+  .quote-stage { width: 94vw !important; padding: 1rem !important; }
+  .quote-phrase { font-size: clamp(1.7rem, 9vw, 3.2rem) !important; }
   /* Restore native cursor + touch behaviour */
   body { cursor: auto !important; }
   a, button, input, textarea, select { cursor: auto !important; }
