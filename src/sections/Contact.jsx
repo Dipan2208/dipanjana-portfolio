@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { trackContactSubmit, trackGitHubClick, trackLinkedInClick, trackResumeDownload } from '../lib/analytics'
 
-const FORMSPREE_ENDPOINT = import.meta.env.VITE_FORMSPREE_ENDPOINT || 'https://formspree.io/f/YOUR_FORMSPREE_ID'
+const FORMSPREE_ENDPOINT = import.meta.env.VITE_FORMSPREE_ENDPOINT || 'https://formspree.io/f/mnppoklb'
 const RESUME_URL = '/Dipanjana_Ghosh_resume.docx'
 
 /* ═══════════════════════════════════════════════════════════════
@@ -73,6 +73,7 @@ const STEPS = {
   PROFILE: 'PROFILE',
   SENDING: 'SENDING',
   DONE: 'DONE',
+  ERROR: 'ERROR',
 }
 
 const OPTION_LIST = [
@@ -95,6 +96,7 @@ function TerminalModal({ isOpen, onClose }) {
   const [choice, setChoice] = useState(null)
   const [inputs, setInputs] = useState({ context: '', name: '', email: '', company: '' })
   const [inputValue, setInputValue] = useState('')
+  const [submissionError, setSubmissionError] = useState('')
   const inputRef = useRef(null)
   const scrollRef = useRef(null)
   const [lines, setLines] = useState([])
@@ -121,6 +123,7 @@ function TerminalModal({ isOpen, onClose }) {
       setChoice(null)
       setInputs({ context: '', name: '', email: '', company: '' })
       setInputValue('')
+      setSubmissionError('')
       setLines([])
     }
   }, [isOpen])
@@ -175,6 +178,33 @@ function TerminalModal({ isOpen, onClose }) {
     setStep(STEPS.CONTEXT)
   }
 
+  const submitMessage = async (company) => {
+    try {
+      const response = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          type: choice,
+          name: inputs.name,
+          email: inputs.email,
+          company,
+          message: inputs.context,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Formspree returned ${response.status}`)
+      }
+
+      trackContactSubmit()
+      setStep(STEPS.DONE)
+    } catch (err) {
+      console.error('Formspree submission failed:', err)
+      setSubmissionError('message could not be sent. Please try again later or email me directly.')
+      setStep(STEPS.ERROR)
+    }
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     const val = inputValue.trim()
@@ -206,25 +236,7 @@ function TerminalModal({ isOpen, onClose }) {
       
       // Sequence: Profile View -> Sending Status -> Done
       setTimeout(() => setStep(STEPS.SENDING), 2800)
-      setTimeout(async () => {
-        try {
-          await fetch(FORMSPREE_ENDPOINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: choice,
-              name: inputs.name,
-              email: inputs.email,
-              company: finalCompany,
-              message: inputs.context
-            })
-          })
-        } catch (err) {
-          console.error('Formspree error:', err)
-        }
-        trackContactSubmit()
-        setStep(STEPS.DONE)
-      }, 4200)
+      setTimeout(() => submitMessage(finalCompany), 4200)
     }
   }
 
@@ -235,25 +247,7 @@ function TerminalModal({ isOpen, onClose }) {
       setStep(STEPS.PROFILE)
       
       setTimeout(() => setStep(STEPS.SENDING), 2800)
-      setTimeout(async () => {
-        try {
-          await fetch(FORMSPREE_ENDPOINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: choice,
-              name: inputs.name,
-              email: inputs.email,
-              company: '—',
-              message: inputs.context
-            })
-          })
-        } catch (err) {
-          console.error('Formspree error:', err)
-        }
-        trackContactSubmit()
-        setStep(STEPS.DONE)
-      }, 4200)
+      setTimeout(() => submitMessage('—'), 4200)
     }
   }
 
@@ -381,7 +375,7 @@ function TerminalModal({ isOpen, onClose }) {
               )}
 
               {/* Name Input - show context answer */}
-              {(step === STEPS.NAME || step === STEPS.EMAIL || step === STEPS.COMPANY || step === STEPS.PROFILE || step === STEPS.SENDING || step === STEPS.DONE) && (
+              {(step === STEPS.NAME || step === STEPS.EMAIL || step === STEPS.COMPANY || step === STEPS.PROFILE || step === STEPS.SENDING || step === STEPS.DONE || step === STEPS.ERROR) && (
                 <>
                   <TermLine type="system" delay={0}>{CONTEXT_PROMPTS[choice]}</TermLine>
                   <TermLine type="user" delay={0}>{inputs.context}</TermLine>
@@ -394,7 +388,7 @@ function TerminalModal({ isOpen, onClose }) {
               )}
 
               {/* Email - show name */}
-              {(step === STEPS.EMAIL || step === STEPS.COMPANY || step === STEPS.PROFILE || step === STEPS.SENDING || step === STEPS.DONE) && (
+              {(step === STEPS.EMAIL || step === STEPS.COMPANY || step === STEPS.PROFILE || step === STEPS.SENDING || step === STEPS.DONE || step === STEPS.ERROR) && (
                 <>
                   <TermLine type="system" delay={0}>your name:</TermLine>
                   <TermLine type="user" delay={0}>{inputs.name}</TermLine>
@@ -406,7 +400,7 @@ function TerminalModal({ isOpen, onClose }) {
               )}
 
               {/* Company - show email */}
-              {(step === STEPS.COMPANY || step === STEPS.PROFILE || step === STEPS.SENDING || step === STEPS.DONE) && (
+              {(step === STEPS.COMPANY || step === STEPS.PROFILE || step === STEPS.SENDING || step === STEPS.DONE || step === STEPS.ERROR) && (
                 <>
                   <TermLine type="system" delay={0}>your email:</TermLine>
                   <TermLine type="user" delay={0}>{inputs.email}</TermLine>
@@ -429,7 +423,7 @@ function TerminalModal({ isOpen, onClose }) {
               )}
 
               {/* Company answer shown */}
-              {(step === STEPS.PROFILE || step === STEPS.SENDING || step === STEPS.DONE) && inputs.company && inputs.company !== '—' && (
+              {(step === STEPS.PROFILE || step === STEPS.SENDING || step === STEPS.DONE || step === STEPS.ERROR) && inputs.company && inputs.company !== '—' && (
                 <>
                   <TermLine type="system" delay={0}>company / organization:</TermLine>
                   <TermLine type="user" delay={0}>{inputs.company}</TermLine>
@@ -437,7 +431,7 @@ function TerminalModal({ isOpen, onClose }) {
               )}
 
               {/* Profile Reinforcement */}
-              {(step === STEPS.PROFILE || step === STEPS.SENDING || step === STEPS.DONE) && (
+              {(step === STEPS.PROFILE || step === STEPS.SENDING || step === STEPS.DONE || step === STEPS.ERROR) && (
                 <>
                   <div className="term-spacer" />
                   <div className="term-profile-block">
@@ -455,10 +449,24 @@ function TerminalModal({ isOpen, onClose }) {
               )}
 
               {/* Sending */}
-              {(step === STEPS.SENDING || step === STEPS.DONE) && (
+              {(step === STEPS.SENDING || step === STEPS.DONE || step === STEPS.ERROR) && (
                 <>
                   <div className="term-spacer" />
-                  <TermLine type="system" delay={0}>sending message...</TermLine>
+                  <TermLine type="system" delay={0}>
+                    {step === STEPS.ERROR ? 'submission status:' : 'sending message...'}
+                  </TermLine>
+                </>
+              )}
+
+              {step === STEPS.ERROR && (
+                <>
+                  <TermLine type="system" delay={0.2}>
+                    <span className="term-error">{submissionError}</span>
+                  </TermLine>
+                  <div className="term-spacer" />
+                  <TermLine type="info" delay={0.4}>
+                    <a href="mailto:dipanjanaghosh489@gmail.com" className="term-email">email me directly</a>
+                  </TermLine>
                 </>
               )}
 
@@ -841,6 +849,7 @@ export default function Contact() {
         .term-user { color: rgba(255, 255, 255, 0.8); }
         .term-info { color: rgba(255, 255, 255, 0.35); }
         .term-success { color: #22c55e; }
+        .term-error { color: #f87171; }
         .term-dim { color: rgba(255, 255, 255, 0.2); }
         .term-label {
           color: var(--color-primary-light);
